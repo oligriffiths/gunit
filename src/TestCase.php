@@ -513,6 +513,12 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
                 'token_secret' => isset($this->auth['token_secret']) ? $this->auth['token_secret'] : null,
             ]);
 
+            // Ensure Oauth1 installed
+            $class = "GuzzleHttp\\Subscriber\\Oauth\\Oauth1";
+            if (!class_exists($class)) {
+                throw new \LogicException('The class ' . $class . ' is missing, please install "guzzlehttp/oauth-subscriber"');
+            }
+
             $this->oauth1_middleware = new Oauth\Oauth1($options);
         }
 
@@ -533,12 +539,13 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
         $details = isset($this->auth['users'][$user]) ? $this->auth['users'][$user] : [];
 
         // Set oauth1 details
-        $reflection = new \ReflectionClass(Oauth\Oauth1::class);
+        $oauth1 = $this->getOauth1Middleware();
+        $reflection = new \ReflectionClass(get_class($oauth1));
         $property = $reflection->getProperty('config');
         $property->setAccessible(true);
 
-        $value = $property->getValue($this->getOauth1Middleware());
-        $property->setValue($this->getOauth1Middleware(), array_merge($value, $details));
+        $value = $property->getValue($oauth1);
+        $property->setValue($oauth1, array_merge($value, $details));
     }
 
     /**
