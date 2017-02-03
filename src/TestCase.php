@@ -271,6 +271,24 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @param string $header
+     * @param string $expected
+     * @param Message\ResponseInterface|null $response
+     */
+    protected function assertContentType($expected, Message\ResponseInterface $response = null)
+    {
+        $response = $response ?: $this->last_response;
+
+        $actual = $response->getHeaderLine('Content-Type');
+        $this->assertEquals($expected, $actual, $this->formatMessage(
+            $response,
+            'Header "Content-Type" expected "%s", received "%s"',
+            $expected,
+            $actual
+        ));
+    }
+
+    /**
      * @param string $key
      * @param Message\ResponseInterface|null $response
      */

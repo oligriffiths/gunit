@@ -6,6 +6,7 @@
         "phpunit/phpunit": "^5.0"
     },
     "suggest": {
+        "brianium/paratest": "Facilitates parallel test running",
         "guzzlehttp/oauth-subscriber": "Allows for OAuth1 authentication through GUnit"
     },
     "license": "MIT",
