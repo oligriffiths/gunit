@@ -1,0 +1,23 @@
+{
+    "name": "oligriffiths/gunit",
+    "description": "API testing suite that sits on top of Guzzle + PHPUNit",
+    "require": {
+        "guzzlehttp/guzzle": "^6.2",
+        "phpunit/phpunit": "^5.0"
+    },
+    "suggest": {
+        "guzzlehttp/oauth-subscriber": "Allows for OAuth1 authentication through GUnit"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Oli Griffiths",
+            "email": "oli.griffiths@me.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "OliGriffiths\\GUnit\\": "src/"
+        }
+    }
+}
