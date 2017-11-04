@@ -1,0 +1,22 @@
+<phpunit>
+    <testsuites>
+        <testsuite name="Demo">
+            <directory>demo/tests</directory>
+        </testsuite>
+    </testsuites>
+    <listeners>
+        <listener class="OliGriffiths\GUnit\TestListener">
+            <arguments>
+                <array>
+                    <element key="headers">
+                        <array>
+                            <element key="X-Foo">
+                                <string>Some Value</string>
+                            </element>
+                        </array>
+                    </element>
+                </array>
+            </arguments>
+        </listener>
+    </listeners>
+</phpunit>

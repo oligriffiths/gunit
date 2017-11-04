@@ -5,6 +5,10 @@
         "guzzlehttp/guzzle": "^6.2",
         "phpunit/phpunit": "^5.0"
     },
+    "require-dev": {
+        "brianium/paratest": "^0.15",
+        "guzzlehttp/oauth-subscriber": "^0.3"
+    },
     "suggest": {
         "brianium/paratest": "Facilitates parallel test running",
         "guzzlehttp/oauth-subscriber": "Allows for OAuth1 authentication through GUnit"

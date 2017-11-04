@@ -2,6 +2,8 @@
 
 namespace OliGriffiths\GUnit;
 
+use GuzzleHttp;
+
 /**
  * Class TestListener
  */
@@ -23,11 +25,6 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
     private $guzzle_options = [];
 
     /**
-     * @var array Array of auth user keys
-     */
-    private $auth;
-
-    /**
      * @var array The config options
      */
     private $config = [];
@@ -36,6 +33,9 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
      * @var bool|mixed
      */
     private $verbose = false;
+
+    private $auth_middleware;
+    private $result_middleware;
 
     /**
      * @inheritDoc
@@ -71,9 +71,11 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
 
         $this->base_uri = isset($config['base_uri']) ? $config['base_uri'] : 'http://localhost';
         $this->headers = isset($config['headers']) ? $config['headers'] : [];
-        $this->auth = isset($config['auth']) ? $config['auth'] : [];
         $this->verbose = isset($config['verbose']) ? $config['verbose'] : false;
+        $this->guzzle_options = isset($config['guzzle_options']) ? $config['guzzle_options'] : [];
         $this->config = $config;
+        $this->auth_middleware = new Middleware\Auth(isset($config['auth']) ? $config['auth'] : []);
+        $this->result_middleware = new Middleware\Result();
     }
 
     /**
@@ -83,22 +85,16 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
     public function startTestSuite(\PHPUnit_Framework_TestSuite $suite)
     {
         // Initialize test options
+        /** @var $test GUnitTrait|\PHPUnit_Framework_Test */
         foreach ($suite as $test) {
-            if (!$test instanceof TestCase) {
+            $uses = class_uses($test);
+
+            /** @var $test GUnitTrait|\PHPUnit_Framework_Test */
+            if (!in_array(GUnitTrait::class, $uses, true)) {
                 continue;
             }
 
-            if ($this->base_uri && !$test->getBaseUri()) {
-                $test->setBaseUri($this->base_uri);
-            }
-
-            $headers = array_merge($this->headers, $test->getHeaders());
-            $test->setHeaders($headers);
-
-            $config = array_merge($this->guzzle_options, $test->getGuzzleOptions());
-            $test->setGuzzleOptions($config);
-
-            $test->setAuth($this->auth);
+            $test->setClient($this->getClient($test));
         }
     }
 
@@ -109,24 +105,106 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
     {
         $this->test_options = [];
 
-        if ($test instanceof TestCase) {
-            $test->setVerbose($this->verbose);
+        $uses = class_uses($test);
+
+        /** @var $test GUnitTrait|\PHPUnit_Framework_Test */
+        if (in_array(GUnitTrait::class, $uses, true)) {
 
             $annotations = $test->getAnnotations();
 
-            $auth_user = isset($annotations['class']['auth-user'][0]) ? $annotations['class']['auth-user'][0] : null;
-            if (!$auth_user) {
-                $auth_user = isset($annotations['method']['auth-user'][0]) ? $annotations['method']['auth-user'][0] : null;
-            }
-
-            $auth_mode = isset($annotations['class']['auth-mode'][0]) ? $annotations['class']['auth-mode'][0] : null;
+            $auth_mode = isset($annotations['method']['auth-mode'][0]) ? $annotations['method']['auth-mode'][0] : null;
             if (!$auth_mode) {
-                $auth_mode = isset($annotations['method']['auth-mode'][0]) ? $annotations['method']['auth-mode'][0] : null;
+                $auth_mode = isset($annotations['class']['auth-mode'][0]) ? $annotations['class']['auth-mode'][0] : null;
             }
 
-            $test->setTestAuthMode($auth_mode);
-            $test->setTestAuthUser($auth_user);
+            $auth_user = isset($annotations['method']['auth-user'][0]) ? $annotations['method']['auth-user'][0] : null;
+            if (!$auth_user) {
+                $auth_user = isset($annotations['class']['auth-user'][0]) ? $annotations['class']['auth-user'][0] : null;
+            }
+
+            $this->auth_middleware->setAuth($auth_mode, $auth_user);
+            $test->setVerbose($this->verbose);
         }
     }
 
+    /**
+     * @param $test GUnitTrait|\PHPUnit_Framework_Test
+     * @return GuzzleHttp\Client
+     */
+    public function getClient(\PHPUnit_Framework_Test $test)
+    {
+        $headers = array_merge($this->headers, $test->getHeaders());
+
+        $options = array_merge(
+            $this->guzzle_options,
+            [
+                'base_uri' => $test->getBaseUri() ?: $this->base_uri,
+                'http_errors' => false,
+                'headers' => $headers,
+            ]
+        );
+        $options['handler'] = GuzzleHttp\HandlerStack::create();
+        $options['handler']->unshift($this->result_middleware);
+        $options['handler']->push($this->auth_middleware);
+
+        return new GuzzleHttp\Client($options);
+    }
+
+    /**
+     * @param GuzzleHttp\HandlerStack $stack
+     * @param string $type
+     * @param string|null $user
+     */
+    protected function addAuthHandlers(GuzzleHttp\HandlerStack $stack)
+    {
+//        $stack->push($this->getOauth1Middleware());
+    }
+
+//    /**
+//     * @return Oauth\Oauth1
+//     */
+//    protected function getOauth1Middleware()
+//    {
+//        if (!$this->oauth1_middleware) {
+//            $options = array_filter([
+//                'consumer_key' => isset($this->auth['consumer_key']) ? $this->auth['consumer_key'] : null,
+//                'consumer_secret' => isset($this->auth['consumer_secret']) ? $this->auth['consumer_secret'] : null,
+//                'token' => isset($this->auth['token']) ? $this->auth['token'] : null,
+//                'token_secret' => isset($this->auth['token_secret']) ? $this->auth['token_secret'] : null,
+//            ]);
+//
+//            // Ensure Oauth1 installed
+//            $class = "GuzzleHttp\\Subscriber\\Oauth\\Oauth1";
+//            if (!class_exists($class)) {
+//                throw new \LogicException('The class ' . $class . ' is missing, please install "guzzlehttp/oauth-subscriber"');
+//            }
+//
+//            $this->oauth1_middleware = new Oauth\Oauth1($options);
+//        }
+//
+//        return $this->oauth1_middleware;
+//    }
+
+    /**
+     * Sets the test auth user creds within the oauth middleware
+     *
+     * @param string|null $user
+     */
+    protected function setUser($user = null)
+    {
+//        if ($user && !isset($this->auth['users'][$user])) {
+//            throw new \InvalidArgumentException(sprintf('User "%s" undefined', $user));
+//        }
+//
+//        $details = isset($this->auth['users'][$user]) ? $this->auth['users'][$user] : [];
+//
+//        // Set oauth1 details
+//        $oauth1 = $this->getOauth1Middleware();
+//        $reflection = new \ReflectionClass(get_class($oauth1));
+//        $property = $reflection->getProperty('config');
+//        $property->setAccessible(true);
+//
+//        $value = $property->getValue($oauth1);
+//        $property->setValue($oauth1, array_merge($value, $details));
+    }
 }
