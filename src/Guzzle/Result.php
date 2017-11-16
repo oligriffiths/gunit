@@ -1,13 +1,13 @@
 <?php
 
-namespace OliGriffiths\GUnit;
+namespace OliGriffiths\GUnit\Guzzle;
 
 use Psr\Http\Message;
 
 /**
  * GuzzleResult is a value object that wraps both the request & the response object of a guzzle call
  */
-class GuzzleResult
+class Result
 {
     /**
      * @var Message\RequestInterface

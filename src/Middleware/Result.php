@@ -18,7 +18,7 @@ class Result
             // Get response
             $response = $promise->wait();
 
-            return new Promise\FulfilledPromise(new GUnit\GuzzleResult($request, $response));
+            return new Promise\FulfilledPromise(new GUnit\Guzzle\Result($request, $response));
         };
     }
 }

@@ -4,13 +4,12 @@ namespace OliGriffiths\GUnit;
 
 use Psr\Http\Message;
 use GuzzleHttp;
-use GuzzleHttp\Subscriber\Oauth;
 
 /**
  * Class TestCase
  * @package Tumblr\ApiTest
  */
-trait GUnitTrait
+trait TestTrait
 {
     /**
      * @var string
@@ -23,17 +22,12 @@ trait GUnitTrait
     protected $headers = [];
 
     /**
-     * @var array
-     */
-    protected $guzzle_options = [];
-
-    /**
      * @var GuzzleHttp\Client
      */
     private $client;
 
     /**
-     * @var GuzzleResult
+     * @var Guzzle\Result
      */
     private $last_result;
 
@@ -41,6 +35,9 @@ trait GUnitTrait
      * @var bool In verbose mode, full response payloads are printed
      */
     private $verbose;
+    
+    private $test_auth_mode;
+    private $test_auth_user;
 
     /**
      * @return string
@@ -63,7 +60,7 @@ trait GUnitTrait
      */
     public function getGuzzleOptions()
     {
-        return $this->guzzle_options;
+        return [];
     }
 
     /**
@@ -83,58 +80,58 @@ trait GUnitTrait
     }
 
     /**
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertOK(GuzzleResult $result = null)
+    protected function assertOK(Guzzle\Result $result = null)
     {
         $this->assertStatusCode(200, $result);
     }
 
     /**
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertCreated(GuzzleResult $result = null)
+    protected function assertCreated(Guzzle\Result $result = null)
     {
         $this->assertStatusCode(201, $result);
     }
 
     /**
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertBadRequest(GuzzleResult $result = null)
+    protected function assertBadRequest(Guzzle\Result $result = null)
     {
         $this->assertStatusCode(400, $result);
     }
 
     /**
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertUnauthorized(GuzzleResult $result = null)
+    protected function assertUnauthorized(Guzzle\Result $result = null)
     {
         $this->assertStatusCode(401, $result);
     }
 
     /**
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertForbidden(GuzzleResult $result = null)
+    protected function assertForbidden(Guzzle\Result $result = null)
     {
         $this->assertStatusCode(403, $result);
     }
 
     /**
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertNotFound(GuzzleResult $result = null)
+    protected function assertNotFound(Guzzle\Result $result = null)
     {
         $this->assertStatusCode(404, $result);
     }
 
     /**
      * @param $expected
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertStatusCode($expected, GuzzleResult $result = null)
+    protected function assertStatusCode($expected, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
@@ -149,9 +146,9 @@ trait GUnitTrait
 
     /**
      * @param $header
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertHeaderExists($header, GuzzleResult $result = null)
+    protected function assertHeaderExists($header, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
@@ -165,9 +162,9 @@ trait GUnitTrait
     /**
      * @param string $header
      * @param string $expected
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertHeaderEquals($header, $expected, GuzzleResult $result = null)
+    protected function assertHeaderEquals($header, $expected, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
@@ -184,9 +181,9 @@ trait GUnitTrait
     /**
      * @param string $header
      * @param string $expected
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertContentType($expected, GuzzleResult $result = null)
+    protected function assertContentType($expected, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
@@ -201,9 +198,9 @@ trait GUnitTrait
 
     /**
      * @param string $key
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertBodyKeyExists($key, GuzzleResult $result = null)
+    protected function assertBodyKeyExists($key, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
@@ -215,7 +212,7 @@ trait GUnitTrait
         }
 
         $this->assertTrue($has_key, $this->formatMessage(
-            $response,
+            $result,
             'Expected body key "%s" missing',
             $key
         ));
@@ -224,9 +221,9 @@ trait GUnitTrait
     /**
      * @param string $key
      * @param $expected
-     * @param Message\ResponseInterface|null $response
+     * @param Guzzle\Result $result
      */
-    protected function assertBodyKeyEquals($key, $expected, GuzzleResult $result = null)
+    protected function assertBodyKeyEquals($key, $expected, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
@@ -248,12 +245,12 @@ trait GUnitTrait
 
     /**
      * @param string $key
-     * @param GuzzleResult $result
+     * @param Guzzle\Result $result
      * @return mixed
      */
-    protected function getBodyKey($key, GuzzleResult $result)
+    protected function getBodyKey($key, Message\ResponseInterface $response)
     {
-        $body = $this->decodeBody($result->getResponse());
+        $body = $this->decodeBody($response);
         $parts = explode('.', $key);
         foreach ($parts as $part) {
             if (!array_key_exists($part, $body)) {
@@ -267,7 +264,7 @@ trait GUnitTrait
     }
 
     /**
-     * @param GuzzleResult $result
+     * @param Guzzle\Result $result
      * @return mixed
      */
     protected function decodeBody(Message\ResponseInterface $response)
@@ -307,12 +304,12 @@ trait GUnitTrait
     }
 
     /**
-     * @param GuzzleResult $response
+     * @param Guzzle\Result $response
      * @param string $message
      * @param array ...$params
      * @return mixed|string
      */
-    private function formatMessage(GuzzleResult $result, $message, ...$params)
+    private function formatMessage(Guzzle\Result $result, $message, ...$params)
     {
         $request = $result->getRequest();
         $response = $result->getResponse();
@@ -325,7 +322,7 @@ trait GUnitTrait
         $message .= ' - URI: ' . $request->getUri();
 
         // & optional response body
-        if ($this->verbose) {
+        if ($this->isVerbose()) {
             $message .= PHP_EOL . 'Response:' . PHP_EOL;
             $message .= $this->responeToString($response);
         }
@@ -334,7 +331,7 @@ trait GUnitTrait
     }
 
     /**
-     * @param GuzzleResult $result
+     * @param Guzzle\Result $result
      * @return string
      */
     private function responeToString(Message\ResponseInterface $response)
@@ -383,6 +380,7 @@ trait GUnitTrait
      */
     protected function makeRequest($method, $uri = null, array $options = [])
     {
+        $options += $this->getGuzzleAuth();
         $this->last_result = $this->getClient()->request($method, $uri, $options);
         return $this->last_result;
     }
@@ -392,10 +390,22 @@ trait GUnitTrait
      * @param array $options
      * @return Message\ResponseInterface
      */
-    protected function sendRequest(\Psr\Http\Message\RequestInterface $request, array $options = [])
+    protected function sendRequest(Message\RequestInterface $request, array $options = [])
     {
+        $options += $this->getGuzzleAuth();
         $this->last_result = $this->getClient()->send($request, $options);
         return $this->last_result;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getGuzzleAuth()
+    {
+        return [
+            'auth_mode' => $this->test_auth_mode,
+            'auth_user' => $this->test_auth_user,
+        ];
     }
 
     /**
@@ -421,5 +431,11 @@ trait GUnitTrait
     public function setClient(GuzzleHttp\Client $client)
     {
         $this->client = $client;
+    }
+    
+    public function setTestAuth($mode, $user)
+    {
+        $this->test_auth_mode = $mode;
+        $this->test_auth_user = $user;
     }
 }
