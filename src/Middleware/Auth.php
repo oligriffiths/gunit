@@ -12,9 +12,6 @@ class Auth
      */
     private $authenticators;
     private $users;
-    
-    private $test_auth_mode;
-    private $test_auth_user;
 
     /**
      * Auth constructor.
@@ -32,11 +29,11 @@ class Auth
     {
         return function(Message\RequestInterface $request, array $options) use ($handler) {
 
-            $auth_mode = $options['auth_mode'];
-            $auth_user = $options['auth_user'];
-            unset($options['auth_mode'], $options['auth_user']);
+            $auth_mode = isset($options['auth_mode']) ? $options['auth_mode'] : null;
+            $auth_user = isset($options['auth_user']) ? $options['auth_user'] : null;
             
             if ($auth_mode || $auth_user) {
+                unset($options['auth_mode'], $options['auth_user']);
                 $request = $this->getAuth($request, $options, $auth_mode, $auth_user);
             }
 
@@ -50,7 +47,7 @@ class Auth
         if ($user) {
             $user = $this->getUser($user);
             
-            if (!$mode) {
+            if ($user && !$mode) {
                 $mode = $user->getAuthenticator();
             }
         }
@@ -59,7 +56,7 @@ class Auth
             throw new \UnexpectedValueException('Auth set but no auth mode');
         }
 
-        $authenticator  = $this->getAuthenticator($mode);
+        $authenticator = $this->getAuthenticator($mode);
         
         if (!$authenticator) {
             throw new \UnexpectedValueException(sprintf(
@@ -77,7 +74,11 @@ class Auth
      */
     private function getUser($user)
     {
-        return isset($this->users[$user]) ? $this->users[$user] : null; 
+        if (!isset($this->users[$user])) {
+            throw new \InvalidArgumentException(sprintf('User "%s" not found', $user));
+        } 
+        
+        return $this->users[$user];
     }
 
     /**
@@ -86,6 +87,10 @@ class Auth
      */
     private function getAuthenticator($mode)
     {
-        return isset($this->authenticators[$mode]) ? $this->authenticators[$mode] : null;
+        if (!isset($this->authenticators[$mode])) {
+            throw new \InvalidArgumentException(sprintf('Authenticator "%s" not found', $mode));
+        }
+        
+        return $this->authenticators[$mode];
     }
 }

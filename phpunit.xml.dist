@@ -8,6 +8,9 @@
         <listener class="OliGriffiths\GUnit\TestListener">
             <arguments>
                 <array>
+                    <element key="base_uri">
+                        <string>https://httpstat.us</string>
+                    </element>
                     <element key="headers">
                         <array>
                             <element key="X-Foo">
