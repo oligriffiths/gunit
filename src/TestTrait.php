@@ -197,6 +197,22 @@ trait TestTrait
     }
 
     /**
+     * @param $expected
+     * @param Guzzle\Result|null $result
+     */
+    protected function assertBodyEquals($expected, Guzzle\Result $result = null)
+    {
+        $result = $result ?: $this->last_result;
+        $body = $result->getResponse()->getBody();
+        
+        $this->assertEquals($expected, $body, $this->formatMessage(
+            $result,
+            'Expected body to equal "%s"',
+            $expected
+        ));
+    }
+
+    /**
      * @param string $key
      * @param Guzzle\Result $result
      */
