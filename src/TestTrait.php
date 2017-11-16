@@ -203,11 +203,27 @@ trait TestTrait
     protected function assertBodyEquals($expected, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
-        $body = $result->getResponse()->getBody();
+        $body = (string) $result->getResponse()->getBody();
         
         $this->assertEquals($expected, $body, $this->formatMessage(
             $result,
             'Expected body to equal "%s"',
+            $expected
+        ));
+    }
+
+    /**
+     * @param $expected
+     * @param Guzzle\Result|null $result
+     */
+    protected function assertBodyContains($expected, Guzzle\Result $result = null)
+    {
+        $result = $result ?: $this->last_result;
+        $body = (string) $result->getResponse()->getBody();
+
+        $this->assertContains($expected, $body, $this->formatMessage(
+            $result,
+            'Expected body to contain "%s"',
             $expected
         ));
     }
