@@ -2,6 +2,7 @@
 
 namespace OliGriffiths\GUnit;
 
+use OliGriffiths\GUnit\PHPUnit\Constraint;
 use Psr\Http\Message;
 use GuzzleHttp;
 
@@ -135,13 +136,9 @@ trait TestTrait
     {
         $result = $result ?: $this->last_result;
 
-        $actual = $result->getResponse()->getStatusCode();
-        $this->assertEquals($expected, $actual, $this->formatMessage(
-            $result,
-            'Expected status code %d, received %d',
-            $expected,
-            $actual
-        ));
+        $constraint = new Constraint\Header($expected, $this->isVerbose());
+
+        static::assertThat($result, $constraint);
     }
 
     /**

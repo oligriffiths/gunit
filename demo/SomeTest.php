@@ -7,7 +7,7 @@ class SomeTest extends PHPUnit_Framework_TestCase
     public function testSomething()
     {
         $this->makeRequest('GET', '/201');
-        $this->assertStatusCode(201);
+        $this->assertStatusCode(200);
         $this->assertBodyEquals('201 Created');
     }
 }
