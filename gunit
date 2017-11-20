@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+$options = getopt('c:', ['configuration:']);
+
+$args = $argv;
+array_shift($args);
+
+if (!isset($options['c'], $options['configuration'])) {
+    $cwd = getcwd();
+    $file = $cwd . '/gunit.xml';
+    if (!file_exists($file)) {
+        $file = $cwd . '/gunit.xml.dist';
+    }
+    
+    array_unshift($args, '--configuration=' . $file);
+}
+
+array_unshift($args, './vendor/bin/phpunit');
+
+$cmd = implode(' ', $args);
+passthru($cmd);
