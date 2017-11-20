@@ -7,35 +7,35 @@ use OliGriffiths\GUnit\Guzzle;
 /**
  * Header constraint is used to validate a HTTP headers
  */
-class Header extends AbstractConstraint
+abstract class Header extends AbstractConstraint
 {
     /**
      * @var string
      */
-    protected $header;
+    private $header;
 
     /**
      * Header constructor, sets the name
      *
-     * @param mixed $expected The expected status code to compare against
-     * @param mixed $header The header name to compare
+     * @param mixed $header The header name to check
+     * @param mixed $expected Optional expected value for the header
      * @param bool $verbose True if enabling verbose mode
      */
-    public function __construct($expected, $header, $verbose = false)
+    public function __construct($header, $expected = null, $verbose = false)
     {
-        parent::__construct($expected, $verbose,'header');
+        parent::__construct($expected, $verbose);
 
         $this->header = $header;
     }
 
-    protected function matches(array $values)
+    /**
+     * @return string
+     */
+    public function getHeader()
     {
-        sort($values);
-        $expected = sort($this->getExpected());
-
-        
+        return $this->header;
     }
-
+    
     /**
      * Get the status code
      *

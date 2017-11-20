@@ -17,7 +17,7 @@ class StatusCode extends AbstractConstraint
      */
     public function __construct($expected, $verbose = false)
     {
-        parent::__construct($expected, $verbose,'status code');
+        parent::__construct($expected, $verbose);
     }
 
     /**
@@ -29,5 +29,13 @@ class StatusCode extends AbstractConstraint
     protected function getValueFromResult(Guzzle\Result $result)
     {
         return $result->getResponse()->getStatusCode();
+    }
+
+    /**
+     * @return string
+     */
+    public function toString()
+    {
+        return sprintf('has the status code %i', $this->getExpected());
     }
 }

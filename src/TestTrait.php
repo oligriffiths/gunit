@@ -136,9 +136,7 @@ trait TestTrait
     {
         $result = $result ?: $this->last_result;
 
-        $constraint = new Constraint\Header($expected, $this->isVerbose());
-
-        static::assertThat($result, $constraint);
+        static::assertThat($result, new Constraint\StatusCode($expected, $this->isVerbose()));
     }
 
     /**
@@ -148,31 +146,20 @@ trait TestTrait
     protected function assertHeaderExists($header, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
-
-        $this->assertTrue($result->getResponse()->hasHeader($header), $this->formatMessage(
-            $result,
-            'Header "%s" missing',
-            $header
-        ));
+        
+        static::assertThat($result, new Constraint\HeaderExists($header, $this->isVerbose()));
     }
 
     /**
      * @param string $header
-     * @param string $expected
+     * @param string|array $expected
      * @param Guzzle\Result $result
      */
     protected function assertHeaderEquals($header, $expected, Guzzle\Result $result = null)
     {
         $result = $result ?: $this->last_result;
 
-        $actual = $result->getResponse()->getHeaderLine($header);
-        $this->assertEquals($expected, $actual, $this->formatMessage(
-            $result,
-            'Header "%s" expected "%s", received "%s"',
-            $header,
-            $expected,
-            $actual
-        ));
+        static::assertThat($result, new Constraint\HeaderEquals($header, $expected, $this->isVerbose()));
     }
 
     /**
