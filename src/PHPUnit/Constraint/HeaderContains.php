@@ -5,7 +5,7 @@ namespace OliGriffiths\GUnit\PHPUnit\Constraint;
 /**
  * Header constraint is used to validate a HTTP headers
  */
-class HeaderEquals extends Header
+class HeaderContains extends Header
 {
     /**
      * Header constructor, sets the name
@@ -34,16 +34,20 @@ class HeaderEquals extends Header
         if (empty($expected)) {
             return empty($values);
         }
-        
+
         $values = (array) $values;
-        
+
+        $contains = [];
         foreach ($expected as $expect) {
-            if (!in_array($expect, $values)) {
-                return false;
+            foreach ($values as $v) {
+                if (strpos($v, $expect) !== false) {
+                    $contains[] = $expect;
+                    break;
+                }
             }
         }
 
-        return true;
+        return count($contains) === count($expected);
     }
 
     /**
@@ -55,7 +59,7 @@ class HeaderEquals extends Header
         $expected = implode(',', (array) $this->getExpected());
         
         return sprintf(
-            'header "%s" has expected value "%s", received "%s"',
+            'header "%s" contains value "%s", received "%s"',
             $this->getHeader(),
             $expected,
             $value
