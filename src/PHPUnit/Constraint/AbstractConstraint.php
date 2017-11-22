@@ -118,10 +118,7 @@ abstract class AbstractConstraint extends \PHPUnit_Framework_Constraint
      * @param $value
      * @return mixed
      */
-    protected function failureText($value)
-    {
-        return $this->toString();
-    }
+    abstract protected function failureText($value);
 
     /**
      * @return string

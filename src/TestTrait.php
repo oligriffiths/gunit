@@ -2,6 +2,7 @@
 
 namespace OliGriffiths\GUnit;
 
+use OliGriffiths\GUnit\Guzzle;
 use OliGriffiths\GUnit\PHPUnit\Constraint;
 use Psr\Http\Message;
 use GuzzleHttp;
@@ -83,71 +84,69 @@ trait TestTrait
     /**
      * @param Guzzle\Result $result
      */
-    protected function assertOK(Guzzle\Result $result = null)
+    public function assertOK(Guzzle\Result $result, $message = null)
     {
-        $this->assertStatusCode(200, $result);
+        $this->assertStatusCode(200, $result, $message);
     }
 
     /**
      * @param Guzzle\Result $result
      */
-    protected function assertCreated(Guzzle\Result $result = null)
+    public function assertCreated(Guzzle\Result $result, $message = null)
     {
-        $this->assertStatusCode(201, $result);
+        $this->assertStatusCode(201, $result, $message);
     }
 
     /**
      * @param Guzzle\Result $result
      */
-    protected function assertBadRequest(Guzzle\Result $result = null)
+    public function assertBadRequest(Guzzle\Result $result, $message = null)
     {
-        $this->assertStatusCode(400, $result);
+        $this->assertStatusCode(400, $result, $message);
     }
 
     /**
      * @param Guzzle\Result $result
      */
-    protected function assertUnauthorized(Guzzle\Result $result = null)
+    public function assertUnauthorized(Guzzle\Result $result, $message = null)
     {
-        $this->assertStatusCode(401, $result);
+        $this->assertStatusCode(401, $result, $message);
     }
 
     /**
      * @param Guzzle\Result $result
      */
-    protected function assertForbidden(Guzzle\Result $result = null)
+    public function assertForbidden(Guzzle\Result $result, $message = null)
     {
-        $this->assertStatusCode(403, $result);
+        $this->assertStatusCode(403, $result, $message);
     }
 
     /**
      * @param Guzzle\Result $result
      */
-    protected function assertNotFound(Guzzle\Result $result = null)
+    public function assertNotFound(Guzzle\Result $result, $message = null)
     {
-        $this->assertStatusCode(404, $result);
+        $this->assertStatusCode(404, $result, $message);
     }
 
     /**
      * @param $expected
      * @param Guzzle\Result $result
      */
-    protected function assertStatusCode($expected, Guzzle\Result $result = null)
+    public function assertStatusCode($expected, Guzzle\Result $result, $message = null)
     {
         $result = $result ?: $this->last_result;
 
-        static::assertThat($result, new Constraint\StatusCode($expected, $this->isVerbose()));
+        static::assertThat($result, new Constraint\StatusCode($expected, $this->isVerbose()), $message);
     }
 
     /**
      * @param $header
      * @param Guzzle\Result $result
      */
-    protected function assertHeaderExists($header, Guzzle\Result $result = null)
+    public function assertHeaderExists($header, Guzzle\Result $result, $message = null)
     {
-        $result = $result ?: $this->last_result;
-        
-        static::assertThat($result, new Constraint\HeaderExists($header, $this->isVerbose()));
+        static::assertThat($result, new Constraint\HeaderExists($header, $this->isVerbose()), $message);
     }
 
     /**
@@ -155,11 +154,9 @@ trait TestTrait
      * @param string|array $expected
      * @param Guzzle\Result $result
      */
-    protected function assertHeaderEquals($header, $expected, Guzzle\Result $result = null)
+    public function assertHeaderEquals($header, $expected, Guzzle\Result $result, $message = null)
     {
-        $result = $result ?: $this->last_result;
-
-        static::assertThat($result, new Constraint\HeaderEquals($header, $expected, $this->isVerbose()));
+        static::assertThat($result, new Constraint\HeaderEquals($header, $expected, $this->isVerbose()), $message);
     }
 
     /**
@@ -167,40 +164,27 @@ trait TestTrait
      * @param string $expected
      * @param Guzzle\Result $result
      */
-    protected function assertContentType($expected, Guzzle\Result $result = null)
+    public function assertContentType($expected, Guzzle\Result $result, $message = null)
     {
-        $result = $result ?: $this->last_result;
-
-        $actual = $result->getResponse()->getHeaderLine('Content-Type');
-        $this->assertEquals($expected, $actual, $this->formatMessage(
-            $result,
-            'Header "Content-Type" expected "%s", received "%s"',
-            $expected,
-            $actual
-        ));
+        $this->assertHeaderEquals('Content-Type', $expected, $result, $message);
     }
 
     /**
      * @param $expected
      * @param Guzzle\Result|null $result
      */
-    protected function assertBodyEquals($expected, Guzzle\Result $result = null)
+    public function assertBodyEquals($expected, Guzzle\Result $result, $message = null)
     {
         $result = $result ?: $this->last_result;
-        $body = (string) $result->getResponse()->getBody();
-        
-        $this->assertEquals($expected, $body, $this->formatMessage(
-            $result,
-            'Expected body to equal "%s"',
-            $expected
-        ));
+
+        static::assertThat($result, new Constraint\BodyEquals($expected, true, $this->isVerbose()), $message);
     }
 
     /**
      * @param $expected
      * @param Guzzle\Result|null $result
      */
-    protected function assertBodyContains($expected, Guzzle\Result $result = null)
+    public function assertBodyContains($expected, Guzzle\Result $result, $message = null)
     {
         $result = $result ?: $this->last_result;
         $body = (string) $result->getResponse()->getBody();
@@ -216,22 +200,9 @@ trait TestTrait
      * @param string $key
      * @param Guzzle\Result $result
      */
-    protected function assertBodyKeyExists($key, Guzzle\Result $result = null)
+    public function assertBodyKeyExists($key, Guzzle\Result $result, $message = null)
     {
-        $result = $result ?: $this->last_result;
-
-        $has_key = true;
-        try {
-            $this->getBodyKey($key, $result->getResponse());
-        } catch (\UnexpectedValueException $e) {
-            $has_key = false;
-        }
-
-        $this->assertTrue($has_key, $this->formatMessage(
-            $result,
-            'Expected body key "%s" missing',
-            $key
-        ));
+        static::assertThat($result, new Constraint\BodyKeyExists($key, $this->isVerbose()), $message);
     }
 
     /**
@@ -239,176 +210,44 @@ trait TestTrait
      * @param $expected
      * @param Guzzle\Result $result
      */
-    protected function assertBodyKeyEquals($key, $expected, Guzzle\Result $result = null)
+    public function assertBodyKeyEquals($key, $expected, Guzzle\Result $result, $message = null)
     {
-        $result = $result ?: $this->last_result;
-
-        $has_key = true;
-        $actual = null;
-        try {
-            $actual = $this->getBodyKey($key, $result->getResponse());
-            $this->assertEquals($expected, $actual, $this->formatMessage(
-                $result,
-                'Expected body key "%s" with value "%s", actual %s"',
-                $key,
-                $expected,
-                is_scalar($actual) ? $actual : print_r($actual, true)
-            ));
-        } catch (\UnexpectedValueException $e) {
-            $this->assertTrue($has_key, $this->formatMessage($result, 'Expected body key "%s" missing', $key));
-        }
-    }
-
-    /**
-     * @param string $key
-     * @param Guzzle\Result $result
-     * @return mixed
-     */
-    protected function getBodyKey($key, Message\ResponseInterface $response)
-    {
-        $body = $this->decodeBody($response);
-        $parts = explode('.', $key);
-        foreach ($parts as $part) {
-            if (!array_key_exists($part, $body)) {
-                throw new \UnexpectedValueException('Body key missing');
-            }
-
-            $body = $body[$part];
-        }
-
-        return $body;
-    }
-
-    /**
-     * @param Guzzle\Result $result
-     * @return mixed
-     */
-    protected function decodeBody(Message\ResponseInterface $response)
-    {
-        $content_type = explode(';', $response->getHeaderLine('Content-Type'));
-        $content_type = $content_type[0];
-
-        if (preg_match('#application\/.*\+json#', $content_type)) {
-            $content_type = 'application/json';
-        }
-
-        return $this->decodeBodyData($content_type, $response->getBody());
-    }
-
-    /**
-     * @param string $content_type The response content type
-     * @param string $data The response data
-     * @return mixed
-     * @throws \UnexpectedValueException If the content type is unsupported
-     */
-    protected function decodeBodyData($content_type, $data)
-    {
-        switch ($content_type) {
-            case 'application/json':
-                return json_decode($data, true);
-
-            case 'application/x-www-form-urlencoded':
-                parse_str($data, $result);
-                return $result;
-
-            default:
-                throw new \UnexpectedValueException(sprintf(
-                    'Unable to decode body, content type %s not supported',
-                    $content_type
-                ));
-        }
-    }
-
-    /**
-     * @param Guzzle\Result $response
-     * @param string $message
-     * @param array ...$params
-     * @return mixed|string
-     */
-    private function formatMessage(Guzzle\Result $result, $message, ...$params)
-    {
-        $request = $result->getRequest();
-        $response = $result->getResponse();
-        
-        // Prepend message as first argument
-        array_unshift($params, $message);
-        $message = call_user_func_array('sprintf', $params);
-
-        // Add URI
-        $message .= ' - URI: ' . $request->getUri();
-
-        // & optional response body
-        if ($this->isVerbose()) {
-            $message .= PHP_EOL . 'Response:' . PHP_EOL;
-            $message .= $this->responeToString($response);
-        }
-
-        return $message;
-    }
-
-    /**
-     * @param Guzzle\Result $result
-     * @return string
-     */
-    private function responeToString(Message\ResponseInterface $response)
-    {
-        $output = [
-            sprintf(
-                'HTTP/%s %d %s',
-                $response->getProtocolVersion(),
-                $response->getStatusCode(),
-                $response->getReasonPhrase()
-            ),
-            '',
-        ];
-
-        foreach ($response->getHeaders() as $header => $values) {
-            foreach ($values as $value) {
-                $output[] = $header . ': ' . $value;
-            }
-        }
-
-        $output[] = '';
-        $content_type = explode(';', $response->getHeaderLine('Content-Type'));
-        $content_type = $content_type[0];
-
-        if (preg_match('#application\/.*\+json#', $content_type)) {
-            $content_type = 'application/json';
-        }
-
-        switch ($content_type) {
-            case 'application/json':
-                $output[] = json_encode(json_decode($response->getBody(), true), JSON_PRETTY_PRINT);
-                break;
-            default:
-                $output[] = $response->getBody();
-                break;
-        }
-
-        return implode(PHP_EOL, $output);
+        static::assertThat($result, new Constraint\BodyKeyEquals($key, $expected, $this->isVerbose()), $message);
     }
 
     /**
      * @param $method
      * @param null $uri
+     * @param array $headers
      * @param array $options
-     * @return Message\ResponseInterface
+     * @return Guzzle\Result
      */
-    protected function makeRequest($method, $uri = null, array $options = [])
+    protected function makeRequest($method, $uri = null, array $headers = [], array $options = [])
     {
         $options += $this->getGuzzleAuth();
+
+        if(!empty($headers)) {
+            $options['headers'] = $headers;
+        }
+
         $this->last_result = $this->getClient()->request($method, $uri, $options);
         return $this->last_result;
     }
 
     /**
      * @param Message\RequestInterface $request
+     * @param array $headers
      * @param array $options
-     * @return Message\ResponseInterface
+     * @return Guzzle\Result
      */
-    protected function sendRequest(Message\RequestInterface $request, array $options = [])
+    protected function sendRequest(Message\RequestInterface $request, array $headers = [], array $options = [])
     {
         $options += $this->getGuzzleAuth();
+
+        if(!empty($headers)) {
+            $options['headers'] = $headers;
+        }
+
         $this->last_result = $this->getClient()->send($request, $options);
         return $this->last_result;
     }
@@ -438,6 +277,10 @@ trait TestTrait
      */
     public function getClient()
     {
+        if (!$this->client) {
+            $this->setClient(Guzzle\Client::clientForTest($this));
+        }
+
         return $this->client;
     }
 
@@ -448,7 +291,11 @@ trait TestTrait
     {
         $this->client = $client;
     }
-    
+
+    /**
+     * @param $mode
+     * @param $user
+     */
     public function setTestAuth($mode, $user)
     {
         $this->test_auth_mode = $mode;

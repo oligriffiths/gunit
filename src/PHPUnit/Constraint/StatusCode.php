@@ -34,7 +34,7 @@ class StatusCode extends AbstractConstraint
     /**
      * @return string
      */
-    public function toString()
+    public function failureText($value)
     {
         return sprintf('has the status code %i', $this->getExpected());
     }

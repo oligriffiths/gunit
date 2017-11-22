@@ -1,7 +1,7 @@
 <phpunit>
     <testsuites>
         <testsuite name="Demo">
-            <directory>demo/tests</directory>
+            <directory>demo</directory>
         </testsuite>
     </testsuites>
     <listeners>

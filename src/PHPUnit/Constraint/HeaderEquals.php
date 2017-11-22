@@ -35,7 +35,8 @@ class HeaderEquals extends Header
             return empty($values);
         }
         
-        $values = (array) $values;
+        $values = is_array($values) ? $values : [$values];
+        $expected = is_array($expected) ? $expected : [$expected];
         
         foreach ($expected as $expect) {
             if (!in_array($expect, $values)) {

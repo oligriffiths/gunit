@@ -3,6 +3,7 @@
 namespace OliGriffiths\GUnit;
 
 use GuzzleHttp;
+use OliGriffiths\GUnit\Guzzle\Client;
 
 /**
  * Class TestListener
@@ -84,6 +85,8 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
         $this->config = $config;
         $this->auth_middleware = new Middleware\Auth($authenticators, $users);
         $this->result_middleware = new Middleware\Result();
+
+        \PHPUnit_Util_Blacklist::$blacklistedClassNames[self::class] = 1;
     }
 
     /**
@@ -141,20 +144,6 @@ class TestListener extends \PHPUnit_Framework_BaseTestListener
      */
     public function getClient(\PHPUnit_Framework_Test $test)
     {
-        $headers = array_merge($this->headers, $test->getHeaders());
-
-        $options = array_merge(
-            $this->guzzle_options,
-            [
-                'base_uri' => $test->getBaseUri() ?: $this->base_uri,
-                'http_errors' => false,
-                'headers' => $headers,
-            ]
-        );
-        $options['handler'] = GuzzleHttp\HandlerStack::create();
-        $options['handler']->unshift($this->result_middleware);
-        $options['handler']->push($this->auth_middleware);
-
-        return new GuzzleHttp\Client($options);
+        return Client::clientForTest($test, $this->guzzle_options, $this->base_uri, $this->headers);
     }
 }
